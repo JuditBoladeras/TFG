@@ -1,103 +1,42 @@
 # mastrobot_example2.py
 import datetime
 import math
-import requests
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 
 STATE = None
-NIU = 1
-OPCIO = 2
-TEST = 3
-ELECCIO = 4
-ESCOLLIR = 5
+BIRTH_YEAR = 1
+BIRTH_MONTH = 2
+BIRTH_DAY = 3
 
 # function to handle the /start command
-def inici(update, context):
+def start(update, context):
     first_name = update.message.chat.first_name
-    update.message.reply_text(f"Hola {first_name}. Benvingut a la plataforma de la UAB per a realitzar qüestionaris.")
-    demanar_niu(update, context)
+    update.message.reply_text(f"Hi {first_name}, nice to meet you!")
+    start_getting_birthday_info(update, context)
 
-def demanar_niu(update, context):
+def start_getting_birthday_info(update, context):
     global STATE
-    STATE = NIU
+    STATE = BIRTH_YEAR
     update.message.reply_text(
-        f"A continuació introdueix el teu NIU per a tenir accés al menú principal.")
+        f"I would need to know your birthday, so tell me what year did you born in...")
 
-def obtenir_estadistiques():
-    url = "https://tfgbd-7eb0.restdb.io/rest/estadistiques"
-    headers = {
-        'content-type': "application/json",
-        'x-apikey': "a797522efb0f9291cdf8f52c3ba6e3e79b047",
-        'cache-control': "no-cache"
-    }
-    coleccio_estadistiques = requests.request("GET", url, headers=headers)
-    return coleccio_estadistiques
-
-
-def accedir_niu(update, context):
+def received_birth_year(update, context):
     global STATE
-    id_est = 0
-    # Funcio que retorni objecte niu de estadistiques
-    estadistiques = obtenir_estadistiques()
-    print("has arribat aqui")
-    identifiacio = ""
-    global ultima_id
-    fila_nius = len(estadistiques.json())
-    count = 0
-    niu_existent = False
-    niu_introduit = int(update.message.text)
-    while count < fila_nius:
-        niu_bd = estadistiques.json()[count].get('niu')
-        if niu_introduit == niu_bd:
-            niu_existent = True
-            identifiacio = str(estadistiques.json()[count].get('_id'))
-            update.message.reply_text(f"S'ha trobat el NIU {niu_introduit} a la Base de Dades.")
-            menu_principal = "Benvingut al menu principal: \n" \
-                             "Opcions: \n" \
-                             "1 -> Realitzar test \n"  \
-                            "2 -> Escollir test \n"
-            update.message.reply_text(menu_principal)
-            STATE = OPCIO
-        count = count + 1
-    if niu_existent == False:
-        missatge_niu_no_trobat = "No s'ha trobat el NIU, torna a introduir-lo"
-        update.message.reply_text(missatge_niu_no_trobat)
 
-    return identifiacio
-
-
-def triar_opcio(update, context):
-    global STATE
     try:
-        eleccio = int(update.message.text)
-        update.message.reply_text(f"La teva opció ha sigut {eleccio}.")
-        if eleccio == 1:
-            STATE = TEST
-            update.message.reply_text(f"Estàs accedint a l'opció 'Realitzar Test'.")
-        if eleccio == 2:
-            STATE = ELECCIO
-            update.message.reply_text(f"Escriu la contrasenya de professor per a poder accedir a l'opció 'Escollir Test'.")
-    except:
-        update.message.reply_text("Has introduït un valor incorrecte")
+        today = datetime.date.today()
+        year = int(update.message.text)
 
-def contrasenya_escollir_test(update, context):
-    global STATE
-    contrasenya_correcta = False
-    while (contrasenya_correcta == False):
-        contrasenya = int(update.message.text)
-        if contrasenya == 1234:
-            correcta = "Contrasenya correcta"
-            update.message.reply_text(correcta)
-            missatge_resposta = "Selecciona el test que vols que els alumnes visualitzin \n" \
-                                "1 -> Tema 1 \n" \
-                                "2 -> Tema 2 \n" \
-                                "3 -> Tema 3 \n"
-            update.message.reply_text(missatge_resposta)
-            contrasenya_correcta = True
-            STATE = ESCOLLIR
-    if contrasenya_correcta == False:
-        incorrecta = "Contrasenya incorrecta, torna a introduir-la"
-        update.message.reply_text(incorrecta)
+        if year > today.year:
+            raise ValueError("invalid value")
+
+        context.user_data['birth_year'] = year
+        update.message.reply_text(
+            f"ok, now I need to know the month (in numerical form)...")
+        STATE = BIRTH_MONTH
+    except:
+        update.message.reply_text(
+            "it's funny but it doesn't seem to be correct...")
 
 def received_birth_month(update, context):
     global STATE
@@ -111,6 +50,7 @@ def received_birth_month(update, context):
 
         context.user_data['birth_month'] = month
         update.message.reply_text(f"great! And now, the day...")
+        STATE = BIRTH_DAY
     except:
         update.message.reply_text(
             "it's funny but it doesn't seem to be correct...")
@@ -148,20 +88,14 @@ def error(update, context):
 def text(update, context):
     global STATE
 
-    if STATE == NIU:
-        return accedir_niu(update, context)
+    if STATE == BIRTH_YEAR:
+        return received_birth_year(update, context)
 
-    if STATE == OPCIO:
-        return triar_opcio(update, context)
-
-    if STATE == TEST:
+    if STATE == BIRTH_MONTH:
         return received_birth_month(update, context)
 
-    if STATE == ELECCIO:
-        return contrasenya_escollir_test(update, context)
-
-    if STATE == ESCOLLIR:
-        return received_birth_month(update, context)
+    if STATE == BIRTH_DAY:
+        return received_birth_day(update, context)
 
 # This function is called when the /biorhythm command is issued
 def biorhythm(update, context):
@@ -202,7 +136,7 @@ def main():
     dispatcher = updater.dispatcher
 
     # add handlers for start and help commands
-    dispatcher.add_handler(CommandHandler("start", inici))
+    dispatcher.add_handler(CommandHandler("start", start))
     dispatcher.add_handler(CommandHandler("help", help))
     # add an handler for our biorhythm command
     dispatcher.add_handler(CommandHandler("biorhythm", biorhythm))
