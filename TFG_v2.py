@@ -114,20 +114,37 @@ def benvinguda(missatge):
         enviar_mensaje(idchat, text_de_benvingutda_generic)
         enviar_mensaje(idchat, text_instruccions)
 
-def menu_principal():
+def menu_principal(usuari):
     global idchat
-    menu_principal = "Benvingut al menu principal \n" \
-                     "Opcions: \n" \
-                     "T -> Realitzar Test \n" \
-                     "E -> Escollir Test \n" \
-                     "P -> Visualitzar Puntuació \n"
-    enviar_mensaje(idchat, menu_principal)
+    # Funcio que retorni objecte niu de estadistiques
+    response = obtenir_estadistiques()
+    index = 0
+    print(usuari)
+    count = 0
+    filasusuaris = len(response.json())
+    while count < filasusuaris:
+        if usuari == str(response.json()[count].get('_id')):
+            if (response.json()[count].get('admin') == True):
+                menu_principal = "Benvingut al menú principal \n" \
+                                 "Opcions: \n" \
+                                 "T -> Realitzar Test \n" \
+                                 "E -> Escollir Test \n" \
+                                 "P -> Visualitzar Puntuacions Globals \n"
+            else:
+                menu_principal = "Benvingut al menú principal \n" \
+                                 "Opcions: \n" \
+                                 "T -> Realitzar Test \n" \
+                                 "P -> Visualitzar Puntuació \n"
+            enviar_mensaje(idchat, menu_principal)
+
+        count = count + 1
 
 
 def triar_opcio(missatge, usuari):
     opcio_triada = ""
     opcio_escollida = False
     global ultima_id
+
     for i in missatge["result"]:
 
         # Llamar a la funcion "leer_mensaje()"
@@ -137,26 +154,53 @@ def triar_opcio(missatge, usuari):
         if id_update > (ultima_id - 1):
             ultima_id = id_update + 1
 
-        #eleccio = "Has escollit la opció " + missage_enviat
-        #enviar_mensaje(idchat,eleccio)
-        if missage_enviat == "T" or missage_enviat =="t":
-            eleccio = "Estàs accedint a l'opció 'Realitzar Test'"
-            enviar_mensaje(idchat, eleccio)
-            test(usuari)
-            print("Sembla que funciona")
-            opcio_escollida = True
+        # Funcio que retorni objecte niu de estadistiques
+        response = obtenir_estadistiques()
+        index = 0
+        print(usuari)
+        count = 0
+        filasusuaris = len(response.json())
+        while count < filasusuaris:
+            if usuari == str(response.json()[count].get('_id')):
+                if (response.json()[count].get('admin') == True):
 
-        if missage_enviat == "E" or missage_enviat == "e":
-            eleccio = "Estàs accedint a l'opció 'Escollir Test'"
-            enviar_mensaje(idchat, eleccio)
-            contrasenya_escollir_test()
-            opcio_escollida = True
+                    #eleccio = "Has escollit la opció " + missage_enviat
+                    #enviar_mensaje(idchat,eleccio)
+                    if missage_enviat == "T" or missage_enviat =="t":
+                        eleccio = "Estàs accedint a l'opció 'Realitzar Test'"
+                        enviar_mensaje(idchat, eleccio)
+                        test(usuari)
+                        print("Sembla que funciona")
+                        opcio_escollida = True
 
-        if missage_enviat == "P" or missage_enviat == "p":
-            eleccio = "Estàs accedint a l'opció 'Visualitzar Puntuació'"
-            enviar_mensaje(idchat, eleccio)
-            visualitzar_puntuacions(usuari)
-            opcio_escollida = True
+                    if missage_enviat == "E" or missage_enviat == "e":
+                        eleccio = "Estàs accedint a l'opció 'Escollir Test'"
+                        enviar_mensaje(idchat, eleccio)
+                        contrasenya_escollir_test(usuari)
+                        opcio_escollida = True
+
+                    if missage_enviat == "P" or missage_enviat == "p":
+                        eleccio = "Estàs accedint a l'opció 'Visualitzar Puntuacions Globals'"
+                        enviar_mensaje(idchat, eleccio)
+                        visualitzar_puntuacions_professor(usuari)
+                        opcio_escollida = True
+                else:
+                    # eleccio = "Has escollit la opció " + missage_enviat
+                    # enviar_mensaje(idchat,eleccio)
+                    if missage_enviat == "T" or missage_enviat == "t":
+                        eleccio = "Estàs accedint a l'opció 'Realitzar Test'"
+                        enviar_mensaje(idchat, eleccio)
+                        test(usuari)
+                        print("Sembla que funciona")
+                        opcio_escollida = True
+
+                    if missage_enviat == "P" or missage_enviat == "p":
+                        eleccio = "Estàs accedint a l'opció 'Visualitzar Puntuació'"
+                        enviar_mensaje(idchat, eleccio)
+                        visualitzar_puntuacions_alumne(usuari)
+                        opcio_escollida = True
+
+            count = count + 1
 
         """if opcio_escollida == False and mensajes_diccionario["result"] != []:
             eleccio = "No has escollit una opció correcta." + "\n" + "Torna a introduïr l'opció que vols realitzar."
@@ -176,7 +220,7 @@ def obtenir_test():
 
 index = 0
 
-def contrasenya_escollir_test():
+def contrasenya_escollir_test(usuari):
     ultima_id = 0
     obviar = 0
     contrasenya_correcta = False
@@ -194,7 +238,7 @@ def contrasenya_escollir_test():
                     eleccio = "Contrasenya correcta"
                     enviar_mensaje(id, eleccio)
                     contrasenya_correcta = True
-                    escollir_test()
+                    escollir_test(usuari)
                 else:
                     eleccio = "Contrasenya incorrecta. Introduiex-la de nou."
                     enviar_mensaje(id, eleccio)
@@ -203,7 +247,7 @@ def contrasenya_escollir_test():
         if id_update > (ultima_id - 1):
             ultima_id = id_update + 1
 
-def escollir_test():
+def escollir_test(usuari):
     ultima_id = 0
     obviar = 0
     test_escollit = False
@@ -297,7 +341,7 @@ def escollir_test():
         obviar = obviar + 1
         if id_update > (ultima_id - 1):
             ultima_id = id_update + 1
-    menu_principal()
+    menu_principal(usuari)
 
 
 def test(usuari):
@@ -397,7 +441,7 @@ def test(usuari):
             if id_update > (ultima_id - 1):
                 ultima_id = id_update + 1
         respondre_test = respondre_test + 1
-    menu_principal()
+    menu_principal(usuari)
 
 
 def actualitza_puntuacio(id_usuari, parametre_a_modificar,valor):
@@ -438,14 +482,9 @@ def actualitza_puntuacio(id_usuari, parametre_a_modificar,valor):
     print(f'{payload}')
     response = requests.request("PUT", url1, data=payload, headers=headers)
 
-def visualitzar_puntuacions(usuari):
-    url = "https://tfgbd-7eb0.restdb.io/rest/estadistiques"
-
-    headers = {'content-type': "application/json",
-               'x-apikey': "a797522efb0f9291cdf8f52c3ba6e3e79b047",
-               'cache-control': "no-cache"}
-
-    response = requests.request("GET", url, headers=headers)
+def visualitzar_puntuacions_alumne(usuari):
+    # Funcio que retorni objecte niu de estadistiques
+    response = obtenir_estadistiques()
     index = 0
     print(usuari)
     count = 0
@@ -463,7 +502,30 @@ def visualitzar_puntuacions(usuari):
 
             enviar_mensaje(idchat, estadistiques)
         count = count + 1
-    menu_principal()
+    menu_principal(usuari)
+
+
+def visualitzar_puntuacions_professor(usuari):
+    # Funcio que retorni objecte niu de estadistiques
+    response = obtenir_estadistiques()
+    index = 0
+    print(usuari)
+    count = 0
+    filasusuaris = len(response.json())
+    while count < filasusuaris:
+        num_niu = str(response.json()[count].get("niu"))
+        num_encerts = str(response.json()[count].get("encerts"))
+        num_errors = str(response.json()[count].get("errors"))
+        num_punts = str(response.json()[count].get("puntuacio"))
+        estadistiques = "Els resultats obtinguts pel NIU " + num_niu +  " són els següents: " \
+                        + "\n" + "Número d'encerts : " + num_encerts \
+                        + "\n" + "Número d'errors : " + num_errors \
+                        + "\n" + "Puntuació total : " + num_punts
+
+        enviar_mensaje(idchat, estadistiques)
+        count = count + 1
+    menu_principal(usuari)
+
 def hola(missatge):
 
     global ultima_id
@@ -499,7 +561,7 @@ def identificacio():
 
     if id != "" and benvingut == True:
         # Acces a fer test per que ja s'ha donat la benvinguda i s'ha guardat el id corresponent al NIU
-        menu_principal()
+        menu_principal(id)
 
     if benvingut == False and mensajes_diccionario["result"] != []:
         print(mensajes_diccionario["result"])
